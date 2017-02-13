@@ -212,11 +212,18 @@ A regular feed-forward neural network will be used to learn a Q Function. Howeve
 
 \section{Evaluation}
 
-To evaluate the performance of the agent, we will hold out certain number of interaction paths present in the \emph{DyCE model}. The DyCE model contains summarized pathways. If the agent is able to put together low-level legitimate paths that connect the elements of DyCE together, it will be considered a hit.
+To evaluate the performance of the agent, we will hold out certain number of interaction paths present in the \emph{DyCE model}. The DyCE model contains summarized pathways. 
 
-To asses the legitimacy of a link, evidence text will be inspected by a human to make sure that it supports the claim made by the automated reader.
+We propose the following evaluation criteria to consider each element a hit:
 
+\begin{enumerate}
+  \item \label{enum:connected-endpoints} \emph{Connected endpoints}: This criterion considers success whenever the search find a connecting both endpoints of concern. These connection doesn't necessarely need to be context-aware or on biochemical level, as long as there is a connection, it's good.
+  \item \emph{Biochemically connected endpoints}: Similar to above, but in this case, the edges must represent biochemical events as opposed to higher-level cellular processes.
+  \item \label{enum:context-agreeing}\emph{Context-agreeing connected endpoints}: Similar as \ref{enum:connected-endpoints}, but this consideres a success when  the path has context information and all the information is coherent.
+	\item \emph{Context-not disagreeing connected endpoints}: This is identical to \label{enum:context-agreeing}with the difference that considers a match when there is no disagreement in context properties of each edge in the path.
+\end{enumerate}
 
+Since all the elements chosen as part of the evaluation, accuracy is an appropriate summary statistic to measure the performance of the system.
 
 
 \section{Implementation}
