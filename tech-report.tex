@@ -2,6 +2,8 @@
 \usepackage{graphicx}
 \usepackage{mathabx}
 \usepackage{todonotes}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \begin{document}
     \title{Focused Reading Tech Report}
 \author{Enrique Noriega}
@@ -68,6 +70,46 @@ The goal of casting the problem into a RL setup is to \emph{do the most spending
 Instead, depending on the current state of the model at any given time of the search, we hypothesize that the RL agent learns a policy that guides the search by selecting the best elements in the model to achieve the goal of the search.
 
 We will define the building blocks of the RL setting based in the modeling introduced in section \ref{sec:modeling}.
+
+\subsection{Algorithm}
+We can formulate the problem at high level as described in algorithm \ref{alg:focusedreading}.
+
+\begin{algorithm}\caption{Focused Reading algorithm}\label{alg:focusedreading}\begin{algorithmic}[1]\Procedure{focused\_reading}{$S,D$}\Comment{$S$ and $D$ are the src and dst}
+   \State $G \gets \{\}$ \Comment{$G$ holds the model as a graph}   \Repeat		\State $(A,B) \gets $ \Call{ChooseEndPoints}{$S,D,G$} \label{alg:chendpoints}
+   		\State $Q \gets$ \Call{ChooseQuery}{$A,B,G$}	\label{alg:chquery}
+   		\State $(V, E) \gets$\Call{Lucene+Reach}{$Q$}\Comment{Query and IE}
+   		\State \Call{Expand}{$V, E, G$}\Comment{Add the new elements to the model}   \Until{\Call{IsConnected}{$S,D$} OR \Call{StopConditionMet}{$G$}}\EndProcedure\end{algorithmic}	
+\end{algorithm}
+
+Special details are deserved for two calls in the pseudocode.
+
+\begin{itemize}
+  \item \emph{ChooseEndPoints} (alg \algref{alg:focusedreading}{alg:chendpoints}):\\
+ 		Is the strategy followed to select the elements of the model which will anchor the next stage of the search. Multiple strategies are being explored to select:
+ 		\begin{itemize}
+			  \item \emph{PageRank}: PR is a ranking algorithm that orders the elements of a network by how likely is to visit an element in the long term. Which of the elements in the ranking to pick is still open to discussion. Intuitively, the highest ranked element would be a good element to chose as an anchor for the search, although we could chose some others. The particular candidate choices are:
+			  	\begin{itemize}
+ 					\item Highest ranked participant (Top PR element)
+ 					\item Lowest ranked participant (Inverse of the top PR)
+ 					\item Element at the middle of the ranking.
+				\end{itemize}
+
+			  \item \emph{TF-IDF}: This is another ranking metric. Functionally, the same argument as with PR holds with TF-IDF, the difference is that in order to order the elements, it uses collection the frequency and the document frequency. The highest ranked element by tf-idf will, more or less be the element with the highest frequency in the Open Access normalized by the inverse of the number of articles where it appears.
+			  \item \emph{Most recently added element(s)}: Select the most recently added element or elements of the model. It is likely that the amount of these class of nodes is very large, hence we might need to rank these as well and take one of the elements.
+			  \item \emph{PMI}: Point-wise mutual information quantifies how likely are we to see together two elements in a collection. Using PMI we rank all the candidate endpoints relative to another element, for example, the search's source or destination and picke that with the highest probability.
+		\end{itemize}
+
+  \item \emph{ChooseQuery}(alg \algref{alg:focusedreading}{alg:chquery}): Multiple query strategies will be used to trade exploration and exploitation. 
+		\begin{enumerate}
+		  \item \emph{Same document with distance constraint}: This is a family of queries, where we retrieve all documents that contain both elements within the certain number of tokens. The number of tokens is a parameter and it's variated to create the family of query strategies.
+		  \item \emph{Same document without distance constraint}: This query strategy retrieves documents where both participants are present, but doesn't put any constraint in their distance.
+		  \item \emph{Any document containing}: Documents that contain either of the elements match the query and will be retrieved.
+		\end{enumerate}
+
+\end{itemize}
+
+
+
 
 \subsection{Actions}
 We introduced two search strategies in section \ref{sec:problemdesc}. To elaborate on how to cast them as actions, first we introduce two functions to use in order to rank the usefulness of a \emph{pair} with respect to both search strategies.
@@ -173,6 +215,8 @@ A regular feed-forward neural network will be used to learn a Q Function. Howeve
 To evaluate the performance of the agent, we will hold out certain number of interaction paths present in the \emph{DyCE model}. The DyCE model contains summarized pathways. If the agent is able to put together low-level legitimate paths that connect the elements of DyCE together, it will be considered a hit.
 
 To asses the legitimacy of a link, evidence text will be inspected by a human to make sure that it supports the claim made by the automated reader.
+
+
 
 
 \section{Implementation}
